@@ -2,6 +2,7 @@ const express = require('express');
 const { title } = require('process');
 const app = express();
 const port = 3000;
+const budgetData = require("./budget-data.json");
 
 app.use('/', express.static('public'));
 
@@ -16,8 +17,8 @@ app.get('/hello', (req, res) => {
   res.send('Hello World!');
 });
 
-app.get('/budget', (req, res) => {
-  res.json(budget);
+app.get('/budget1', (req, res) => {
+  res.json(budgetData);
 });
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
