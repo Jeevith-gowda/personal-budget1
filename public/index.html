@@ -6,6 +6,8 @@
     <title>Personal Budget</title>
     <link rel="stylesheet" href="/reset.css">
     <link rel="stylesheet" href="/main.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 </head>
 <body>
 
@@ -37,7 +39,7 @@
             </div>
     
             <div class="text-box">
-                <h1>Alerts</h1>
+                <h1>Alert</h1>
                 <p>
                     What if your clothing budget ended? You will get an alert. The goal is to never go over the budget.
                 </p>
@@ -78,7 +80,7 @@
             <div class="text-box">
                 <h1>Results</h1>
                 <p>
-                    People who stick to a financial plan, budgeting every expense, get out of debt faster!
+                    People who are stick to a financial plan, budgeting every expense, get out of debt faster!
                     Also, they to live happier lives... since they expend without guilt or fear... 
                     because they know it is all good and accounted for.
                 </p>
@@ -87,7 +89,7 @@
             <div class="text-box">
                 <h1>Free</h1>
                 <p>
-                    This app is free!!! And you are the only one holding your data!
+                    <canvas id="myChart" width="400" height="400"></canvas>
                 </p>
             </div>
 
@@ -101,5 +103,69 @@
         </div>
     </div>
 
+    
+      <canvas id="myChart" width="400" height="400"></canvas>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.11.0/axios.min.js" integrity="sha512-h9644v03pHqrIHThkvXhB2PJ8zf5E9IyVnrSfZg8Yj8k4RsO4zldcQc4Bi9iVLUCCsqNY0b4WXVV4UB+wbWENA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.0/chart.min.js" integrity="sha512-n/G+dROKbKL3GVngGWmWfwK0yPctjZQM752diVYnXZtD/48agpUKLIn0xDQL9ydZ91x6BiOmTIFwWjjFi2kEFg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  
+
+    <script>
+        dataSource = {
+    datasets: [{
+        data: [20, 1000, 200, 150, 100],
+        backgroundColor: [ 
+            'rgb(255, 99, 132)',
+            'rgb(54, 162, 235)',
+            'rgb(255, 205, 86)',
+            'rgb(75, 192, 192)',
+            'rgb(153, 102, 255)'
+        ],
+    }],
+
+    // These labels appear in the legend and in the tooltips when hovering different arcs
+    labels: [
+        'Eat out',
+        'Grocery',
+        'Rent',
+        'Utilities',
+        'Entertainment'
+    ]
+};
+
+          function createChart(){
+            var ctx = document.getElementById('myChart').getContext('2d');
+            var myPieChart = new Chart(ctx, {
+                type: 'pie',
+                data: dataSource,
+                options: {}
+            });
+          }
+
+          function getBudgetData(){
+            axios.get('/budget')
+            .then(function (response) {
+                // handle success
+                console.log(response.data);
+                for (var i=0; i<response.data.myBudget.length; i++){
+                    dataSource.datasets[0].data[i] = response.data.myBudget[i].budget;
+                    dataSource.labels[i] = response.data.myBudget[i].title;
+                }
+                createChart();
+            })
+            .catch(function (error) {
+                // handle error
+                console.log(error);
+            })
+            .then(function () {
+                // always executed
+            });
+          }
+          createChart();
+    </script>
+<h2>Budget Overview</h2>
+<canvas id="myChart" width="400" height="400"></canvas>
+  <script src="script.js"></script>
+
 </body>
+
 </html>
