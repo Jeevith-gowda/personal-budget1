@@ -141,23 +141,19 @@
     // This script creates the Chart.js Pie Chart
     let myPieChart; // Variable to hold the chart instance
 
-    axios.get('/budget')
+    axios.get('/api/budget')  // CHANGED: /budget to /api/budget
         .then(response => {
-            const budgetData = response.data.myBudget;
+            const budgetData = response.data;  // CHANGED: removed .myBudget
 
             const chartJsData = {
                 labels: budgetData.map(item => item.title),
                 datasets: [{
                     data: budgetData.map(item => item.budget),
-                    backgroundColor: [
-                        'rgb(255, 99, 132)', 'rgb(54, 162, 235)', 'rgb(255, 205, 86)',
-                        'rgb(75, 192, 192)', 'rgb(153, 102, 255)'
-                    ]
+                    backgroundColor: budgetData.map(item => item.color)  // CHANGED: Use colors from MongoDB
                 }]
             };
             const ctx = document.getElementById('myChart').getContext('2d');
             
-           
             if (myPieChart) {
                 myPieChart.destroy();
             }
@@ -170,13 +166,10 @@
 
 
 <script>
-    
-
-    // --- Chart Setup (FIX #1: Increased Size) ---
+    // --- Chart Setup ---
     const width = 900, height = 600;
-    const radius = Math.min(width, height) / 2 - 60; // Adjusted radius for more label space
+    const radius = Math.min(width, height) / 2 - 60;
 
-    // Arc generators
     const arc = d3.arc()
         .innerRadius(radius * 0.4)
         .outerRadius(radius * 0.8);
@@ -185,30 +178,23 @@
         .innerRadius(radius * 0.9)
         .outerRadius(radius * 0.9);
 
-    // Pie generator
     const pie = d3.pie()
         .sort(null)
         .value(d => d.budget);
 
-    // Color scale
     const color = d3.scaleOrdinal(d3.schemeTableau10);
 
-    
     const svg = d3.select("#d3-donut-chart")
         .attr("width", width)
         .attr("height", height)
       .append("g")
         .attr("transform", `translate(${width / 2}, ${height / 2})`);
 
-    // dedicated groups for slices, lines, and labels
     svg.append("g").attr("class", "slices");
     svg.append("g").attr("class", "lines");
     svg.append("g").attr("class", "labels");
 
-
-    // --- The Main Update Function  ---
     function update(data) {
-        
         const slices = svg.select(".slices").selectAll("path").data(pie(data), d => d.data.title);
         slices.enter().append("path").style("fill", d => color(d.data.title)).attr("class", "slice").each(function(d) { this._current = d; });
         slices.transition().duration(1000).attrTween("d", function(d) {
@@ -217,9 +203,12 @@
             return t => arc(interpolate(t));
         });
         slices.exit().remove();
+        
         const labels = svg.select(".labels").selectAll("text").data(pie(data), d => d.data.title);
         labels.enter().append("text").attr("dy", ".35em").text(d => d.data.title).each(function(d) { this._current = d; });
+        
         function midAngle(d) { return d.startAngle + (d.endAngle - d.startAngle) / 2; }
+        
         labels.transition().duration(1000).attrTween("transform", function(d) {
             const interpolate = d3.interpolate(this._current, d);
             this._current = interpolate(0);
@@ -238,6 +227,7 @@
             };
         });
         labels.exit().remove();
+        
         const polylines = svg.select(".lines").selectAll("polyline").data(pie(data), d => d.data.title);
         polylines.enter().append("polyline").each(function(d) { this._current = d; });
         polylines.transition().duration(1000).attrTween("points", function(d) {
@@ -253,37 +243,29 @@
         polylines.exit().remove();
     }
 
-
-    // --- Data Fetching and Event Handling ---
     let originalBudgetData = [];
 
-    axios.get('/budget')
+    axios.get('/api/budget')  // CHANGED: /budget to /api/budget
         .then(response => {
-            // FIX #2: Process data to group small slices into "Other"
-            const rawData = response.data.myBudget;
+            const rawData = response.data;  // CHANGED: removed .myBudget
             const totalBudget = d3.sum(rawData, d => d.budget);
-            const thresholdPercent = 0.04; // Group slices smaller than 4%
+            const thresholdPercent = 0.04;
 
-            // Get the main slices that are above the threshold
             let mainSlices = rawData.filter(d => (d.budget / totalBudget) >= thresholdPercent);
-            
-            // Get the small slices to be grouped
             let otherSlices = rawData.filter(d => (d.budget / totalBudget) < thresholdPercent);
 
-            // If there are small slices, add an "Other" slice
             if (otherSlices.length > 0) {
                 const otherSum = d3.sum(otherSlices, d => d.budget);
                 mainSlices.push({ title: 'Other', budget: otherSum });
             }
 
             originalBudgetData = mainSlices;
-            update(originalBudgetData); // Initial draw with the cleaned-up data
+            update(originalBudgetData);
         })
         .catch(error => {
             console.error('Error fetching data for D3 Charts:', error);
         });
 
-    // Event listener for the randomize button
     d3.select("#randomize-donut").on("click", () => {
         const randomizedData = originalBudgetData.map(item => ({
             ...item,
@@ -291,7 +273,6 @@
         }));
         update(randomizedData);
     });
-
 </script>
 
 
